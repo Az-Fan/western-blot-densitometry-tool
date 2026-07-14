@@ -1,0 +1,8 @@
+* text=auto
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.js text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.py text eol=lf
+

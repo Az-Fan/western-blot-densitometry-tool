@@ -1,0 +1,26 @@
+/* Keep the primary workflow visible; retain advanced functions in code. */
+#startFirstLaneBtn,
+#applyRoiSizeBtn,
+#undoBtn,
+.results > .section-title .actions,
+.side .formula,
+#studioFront,
+#studioBack,
+#studioDelete {
+  display: none !important;
+}
+
+.toolbar label:has(#bgGap),
+.toolbar label:has(#bgHeight) {
+  display: none;
+}
+.studio-toolbar label:has(#studioName) { display: none; }
+
+@media (min-width: 1100px) {
+  .side { display: block; }
+  .side > .card:first-child { height: 100%; }
+}
+
+.toolbar { gap: 8px; }
+.toolbar button { padding: 9px 12px; }
+.studio-toolbar { gap: 6px; }

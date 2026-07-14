@@ -1,0 +1,27 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+py_vendor/
+
+# Local validation binaries and source images
+validation/test.tif
+validation/imagej/ij.jar
+validation/preview_inverted.png
+validation/*_comparison.csv
+validation/imagej_*.csv
+
+# User data and generated exports
+*.tif
+*.tiff
+*.png
+*.pdf
+*.xlsx
+*.zip
+wb-panel-project.json
+
+# Editor and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

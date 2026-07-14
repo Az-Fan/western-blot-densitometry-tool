@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WB 灰度定量工具</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="interaction.css">
+  <link rel="stylesheet" href="panel.css">
+  <link rel="stylesheet" href="studio.css">
+  <link rel="stylesheet" href="dashboard.css">
+  <link rel="stylesheet" href="matrix.css">
+  <link rel="stylesheet" href="simplify.css">
+  <link rel="stylesheet" href="welcome.css">
+  <link rel="stylesheet" href="modal.css">
+</head>
+<body>
+  <div id="dropOverlay"><div><strong>松开以导入 WB 图片</strong><span>支持 TIFF、PNG、JPG</span></div></div>
+  <div id="welcomeModal" class="welcome-modal" hidden><div class="welcome-card"><button id="closeWelcome" class="welcome-close">×</button><p class="eyebrow">WB GRAY TOOL · v0.6</p><h2>三步完成一张膜</h2><div class="welcome-steps"><div><b>1</b><strong>导入与框选</strong><span>拖入原始 TIFF，聚焦条带区，手框前两个 Lane 后生成其余 ROI。</span></div><div><b>2</b><strong>汇总灰度</strong><span>输入蛋白名，把 NetIntDen 加入整膜表，统一填写样本名。</span></div><div><b>3</b><strong>完成组图</strong><span>将裁剪加入 Panel，微调位置和显示，导出高清 PNG。</span></div></div><button id="welcomeStart">开始使用</button><label><input id="welcomeDontShow" type="checkbox"> 下次不再显示</label></div></div>
+  <div id="cropNameModal" class="crop-name-modal" hidden><div class="crop-name-card"><h3>命名当前条带</h3><p>确认一次即可同时加入带框线的条带图层和名称文字。</p><label>蛋白名<input id="cropNameInput" placeholder="例如 p-mTOR" autocomplete="off"></label><label>字体<select id="cropFontFamily"><option>Arial</option><option>Times New Roman</option><option>Helvetica</option><option>Calibri</option></select></label><label>字号<input id="cropFontSize" type="number" min="8" max="96" value="24"></label><div><button id="cancelCropName" class="ghost">取消</button><button id="confirmCropName">加入 Panel</button></div></div></div>
+  <div id="textNameModal" class="crop-name-modal" hidden><div class="crop-name-card"><h3>添加文字</h3><p>文字将以独立图层加入画布，可拖动、缩放、删除并修改字体。</p><label>文字<input id="textNameInput" placeholder="例如 Control、p-mTOR" autocomplete="off"></label><label>字体<select id="textFontFamily"><option>Arial</option><option>Times New Roman</option><option>Helvetica</option><option>Calibri</option></select></label><label>字号<input id="textFontSize" type="number" min="8" max="96" value="24"></label><div><button id="cancelTextName" class="ghost">取消</button><button id="confirmTextName">加入文字</button></div></div></div>
+  <header>
+    <div>
+      <p class="eyebrow">LOCAL · AUDITABLE · ZERO UPLOAD</p>
+      <h1>WB 灰度定量</h1>
+      <p>固定尺寸 ROI、局部背景扣除、内参归一化。计算始终使用原始像素。</p>
+    </div>
+    <div class="header-actions"><span id="backendPill" class="backend-pill"><i></i><span>检查本地后端</span></span><button id="helpBtn" class="header-help">使用帮助</button><label class="upload">导入原始图片<input id="fileInput" type="file" accept="image/tiff,image/png,image/jpeg"></label></div>
+  </header>
+
+  <main>
+    <section class="workspace card">
+      <div class="toolbar">
+        <div class="segmented" id="modePicker">
+          <button data-mode="target" class="active">目标蛋白</button>
+          <button data-mode="reference">内参</button>
+        </div>
+        <label>定量极性
+          <select id="signalMode">
+            <option value="light">高像素值为信号</option>
+            <option value="dark">低像素值为信号</option>
+          </select>
+        </label>
+        <label>显示 <select id="displayMode"><option value="auto">自动（论文常用）</option><option value="original">原始黑白方向</option><option value="invert">反相显示</option></select></label>
+        <label>背景间隔 <input id="bgGap" type="number" min="0" value="3"></label>
+        <label>背景高度 <input id="bgHeight" type="number" min="1" value="6"></label>
+        <label>缩放 <select id="zoomSelect"><option value="fit">适应窗口</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="1">100%</option><option value="1.5">150%</option><option value="2">200%</option><option value="3">300%</option><option value="4">400%</option><option value="6">600%</option><option value="8">800%</option></select></label>
+        <button id="focusRoiBtn" class="ghost">聚焦当前区域</button>
+        <button id="straightenBtn" class="ghost">画线拉平</button>
+        <button id="startRegionBtn" hidden>框选条带区域</button>
+        <button id="detectRegionBtn" hidden>识别框内条带</button>
+        <button id="detectAllBtn" hidden>整图识别</button>
+        <button id="startFirstLaneBtn" class="ghost">① 手框第1个 Lane</button>
+        <button id="duplicateLaneBtn" class="ghost">② 向右复制一个框</button>
+        <label>框宽 <input id="roiWidth" type="number" min="4" value="80"></label>
+        <label>框高 <input id="roiHeight" type="number" min="4" value="40"></label>
+        <button id="applyRoiSizeBtn" class="ghost">应用当前框</button>
+        <button id="applyAllRoiSizeBtn" class="ghost">统一全部框</button>
+        <label>Lane数 <input id="manualLaneCount" type="number" min="2" max="48" value="8"></label>
+        <button id="generateLanesBtn">③ 按间距生成</button>
+        <button id="undoBtn" class="ghost">撤销本组</button>
+        <button id="clearBtn" class="ghost danger">清除所有 ROI</button>
+        <button id="removeImageBtn" class="ghost danger">移除图片</button>
+      </div>
+
+      <div id="emptyState">
+        <strong>先导入 WB 原始图片</strong>
+        <span>推荐使用未调整亮度/对比度的 TIFF 或 PNG；JPEG 仅用于临时分析。</span>
+      </div>
+      <div id="canvasWrap" hidden>
+        <canvas id="imageCanvas"></canvas>
+        <canvas id="overlayCanvas"></canvas>
+      </div>
+      <p class="hint">推荐：粗框整排并“聚焦当前区域”→清除ROI→直接拖出第1个Lane→向右复制并拖到第2个Lane→输入Lane数→按间距生成。</p>
+    </section>
+
+    <aside class="side">
+      <section class="card">
+        <div class="section-title"><h2>质量控制</h2><span id="qcBadge">等待图片</span></div>
+        <ul id="qcList" class="qc-list"><li>尚未开始分析</li></ul>
+      </section>
+      <section class="card formula">
+        <h2>计算口径</h2>
+        <p><code>NetIntDen = ROI信号总和 − ROI面积 × 局部背景中位数</code></p>
+        <small>局部背景取条带上、下等宽区域的全部像素中位数。</small>
+      </section>
+    </aside>
+
+    <section class="results card">
+      <div class="section-title">
+        <div><h2>定量结果</h2><p>目标/内参仅在两组泳道数一致时计算。</p></div>
+        <div class="actions"><button id="exportCsv" disabled>导出 CSV</button><button id="exportJson" disabled>导出分析记录</button><button id="exportPng" disabled>导出标注图</button></div>
+      </div>
+      <div class="matrix-entry">
+        <label>蛋白名 <input id="matrixProtein" placeholder="例如 p-mTOR"></label>
+        <button id="matrixAdd">把当前灰度加入整膜表</button>
+        <button id="matrixExport" disabled>导出整膜表</button>
+        <button id="matrixClear" class="ghost danger">清空整膜表</button>
+        <span>样本名可直接在表头修改；数值也可手工修订。</span>
+      </div>
+      <div class="matrix-wrap"><table id="matrixTable"><thead id="matrixHead"></thead><tbody id="matrixBody"><tr><td class="empty-row">完成一组 Lane 定量后，将当前灰度加入整膜表</td></tr></tbody></table></div>
+      <details class="raw-details" open><summary>查看当前 ROI 明细</summary>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>泳道</th><th>目标 NetIntDen</th><th>内参 NetIntDen</th><th>目标/内参</th><th>相对泳道 1</th><th>QC</th></tr></thead>
+          <tbody id="resultBody"><tr><td colspan="6" class="empty-row">框选条带后显示结果</td></tr></tbody>
+        </table>
+      </div>
+      </details>
+    </section>
+
+    <section class="panel-maker card">
+      <div class="section-title">
+        <div><h2>手工拼图 Panel</h2><p>画一个框、加入一个裁剪；拖动卡片改变顺序，使用上下按钮进行对齐。</p></div>
+        <button id="exportPanel" disabled>导出 Panel PNG</button>
+      </div>
+      <div class="panel-controls">
+        <label>框宽 <input id="cropWidth" type="number" min="4" value="80"></label>
+        <label>框高 <input id="cropHeight" type="number" min="4" value="40"></label>
+        <label><input id="fixedPlacement" type="checkbox" checked> 单击放置固定框</label>
+        <button id="applyCropSize" class="ghost">应用到当前框</button>
+        <button id="addToPanel">加入 Panel</button>
+        <button id="clearPanel" class="ghost danger">清空 Panel</button>
+        <label>排列 <select id="panelLayout"><option value="vertical">上下排列（多张膜）</option><option value="horizontal">左右排列（单个条带）</option></select></label>
+        <label><input id="panelBorder" type="checkbox" checked> 导出外框</label>
+      </div>
+      <div id="panelEmpty">框选条带后自动生成预览</div>
+      <div id="panelEditor"></div>
+      <div id="panelPreviewWrap"><canvas id="panelCanvas"></canvas></div>
+      <p class="panel-note">卡片可拖动排序。上下排列时用 ←/→ 调整行对齐；左右排列时用 ↑/↓ 调整条带对齐。Shift+点击每次移动5像素。</p>
+    </section>
+
+    <section class="panel-studio card">
+      <div class="section-title"><div><h2>Panel Studio</h2><p>裁剪作为图层加入画布，可自由拖动、缩放、命名和对齐。</p></div><div class="actions"><button id="studioSave" class="ghost">保存工程</button><label class="studio-file ghost">打开工程<input id="studioLoad" type="file" accept="application/json"></label><button id="studioExportPdf" class="ghost">导出 PDF</button><button id="studioExport">导出高清 PNG</button></div></div>
+      <div class="studio-toolbar">
+        <label>名称 <input id="studioName" placeholder="例如 p-mTOR"></label><button id="studioAddCrop">加入当前裁剪</button><button id="studioAddText" class="ghost">添加文字</button>
+        <button id="studioUndo" class="ghost">撤销</button><button id="studioRedo" class="ghost">重做</button>
+        <button id="studioAlignLeft" class="ghost">左对齐</button><button id="studioAlignTop" class="ghost">顶对齐</button><button id="studioDistH" class="ghost">横向等距</button><button id="studioDistV" class="ghost">纵向等距</button>
+        <button id="studioFront" class="ghost">上移一层</button><button id="studioBack" class="ghost">下移一层</button><button id="studioDelete" class="ghost danger">删除</button>
+        <label>亮度 <input id="studioBrightness" type="range" min="-100" max="100" value="0"><output id="studioBrightnessValue">0</output></label>
+        <label>对比度 <input id="studioContrast" type="range" min="-100" max="100" value="0"><output id="studioContrastValue">0</output></label>
+        <label>字体 <select id="studioFontFamily"><option>Arial</option><option>Times New Roman</option><option>Helvetica</option><option>Calibri</option></select></label>
+        <label>文字字号 <input id="studioFontSize" type="number" min="8" max="96" value="24"></label>
+        <button id="studioResetTone" class="ghost">重置显示</button>
+      </div>
+      <div class="studio-body"><div id="studioStage"></div><aside><h3>图层</h3><div id="studioLayers"></div><p>单击选择；Shift+单击多选。拖动四角缩放，方向键微调。</p></aside></div>
+    </section>
+  </main>
+  <footer>本工具仅做像素定量，不替代对曝光线性范围、实验设计和原始膜图的人工审核。</footer>
+  <script src="vendor/pako.min.js"></script>
+  <script src="vendor/UTIF.js"></script>
+  <script src="vendor/konva.min.js"></script>
+  <script src="vendor/jspdf.umd.min.js"></script>
+  <script src="app.js"></script>
+  <script src="matrix.js"></script>
+  <script src="studio.js"></script>
+</body>
+</html>
