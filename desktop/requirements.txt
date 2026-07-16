@@ -1,0 +1,4 @@
+-r ../requirements.txt
+pywebview>=6.2
+pyinstaller>=6.21
+

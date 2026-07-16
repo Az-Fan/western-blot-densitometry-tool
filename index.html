@@ -10,7 +10,8 @@
   <link rel="stylesheet" href="studio.css">
   <link rel="stylesheet" href="dashboard.css">
   <link rel="stylesheet" href="matrix.css">
-  <link rel="stylesheet" href="simplify.css">
+  <link rel="stylesheet" href="simplify.css?v=20260715-4">
+  <link rel="stylesheet" href="polish.css?v=20260715-2">
   <link rel="stylesheet" href="welcome.css">
   <link rel="stylesheet" href="modal.css">
 </head>
@@ -31,36 +32,82 @@
   <main>
     <section class="workspace card">
       <div class="toolbar">
-        <div class="segmented" id="modePicker">
-          <button data-mode="target" class="active">目标蛋白</button>
-          <button data-mode="reference">内参</button>
+        <div class="analysis-primary">
+          <span class="analysis-label">当前分析</span>
+          <div class="segmented" id="modePicker">
+            <button data-mode="target" class="active">目标蛋白</button>
+            <button data-mode="reference">内参</button>
+          </div>
+          <span class="analysis-guidance">按下面 3 步建立整排 Lane</span>
         </div>
-        <label>定量极性
-          <select id="signalMode">
-            <option value="light">高像素值为信号</option>
-            <option value="dark">低像素值为信号</option>
-          </select>
-        </label>
-        <label>显示 <select id="displayMode"><option value="auto">自动（论文常用）</option><option value="original">原始黑白方向</option><option value="invert">反相显示</option></select></label>
-        <label>背景间隔 <input id="bgGap" type="number" min="0" value="3"></label>
-        <label>背景高度 <input id="bgHeight" type="number" min="1" value="6"></label>
-        <label>缩放 <select id="zoomSelect"><option value="fit">适应窗口</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="1">100%</option><option value="1.5">150%</option><option value="2">200%</option><option value="3">300%</option><option value="4">400%</option><option value="6">600%</option><option value="8">800%</option></select></label>
-        <button id="focusRoiBtn" class="ghost">聚焦当前区域</button>
-        <button id="straightenBtn" class="ghost">画线拉平</button>
+
         <button id="startRegionBtn" hidden>框选条带区域</button>
         <button id="detectRegionBtn" hidden>识别框内条带</button>
         <button id="detectAllBtn" hidden>整图识别</button>
-        <button id="startFirstLaneBtn" class="ghost">① 手框第1个 Lane</button>
-        <button id="duplicateLaneBtn" class="ghost">② 向右复制一个框</button>
-        <label>框宽 <input id="roiWidth" type="number" min="4" value="80"></label>
-        <label>框高 <input id="roiHeight" type="number" min="4" value="40"></label>
-        <button id="applyRoiSizeBtn" class="ghost">应用当前框</button>
-        <button id="applyAllRoiSizeBtn" class="ghost">统一全部框</button>
-        <label>Lane数 <input id="manualLaneCount" type="number" min="2" max="48" value="8"></label>
-        <button id="generateLanesBtn">③ 按间距生成</button>
-        <button id="undoBtn" class="ghost">撤销本组</button>
-        <button id="clearBtn" class="ghost danger">清除所有 ROI</button>
-        <button id="removeImageBtn" class="ghost danger">移除图片</button>
+
+        <div class="workflow-steps" aria-label="Lane 框选流程">
+          <section class="workflow-step">
+            <span class="workflow-number">1</span>
+            <div><strong>框选第 1 个 Lane</strong><small>按钮后在图中拖出合适大小</small></div>
+            <button id="startFirstLaneBtn">开始框选</button>
+            <div class="fixed-roi-controls">
+              <label>框宽 <input id="cropWidth" type="number" min="4" value="80"></label>
+              <label>框高 <input id="cropHeight" type="number" min="4" value="40"></label>
+              <button id="addFixedRoi" class="ghost">加入固定框</button>
+              <button id="applyCropSize" class="ghost" hidden>应用到当前框</button>
+            </div>
+          </section>
+          <section class="workflow-step">
+            <span class="workflow-number">2</span>
+            <div><strong>定位第 2 个 Lane</strong><small>复制后拖到相邻泳道</small></div>
+            <button id="duplicateLaneBtn">复制第 2 个框</button>
+          </section>
+          <section class="workflow-step">
+            <span class="workflow-number">3</span>
+            <div><strong>生成全部 Lane</strong><small>点击数量，立即按前两个框的间距排列</small></div>
+            <div class="lane-presets" aria-label="选择 Lane 数量">
+              <button type="button" data-lane-count="2">2</button>
+              <button type="button" data-lane-count="4">4</button>
+              <button type="button" data-lane-count="6">6</button>
+              <button type="button" data-lane-count="8">8</button>
+              <button type="button" data-lane-count="10">10</button>
+            </div>
+            <input id="manualLaneCount" type="number" min="2" max="48" value="8" hidden>
+            <button id="generateLanesBtn" hidden>生成全部 Lane</button>
+          </section>
+        </div>
+
+        <details class="advanced-tools">
+          <summary>显示与高级工具</summary>
+          <div class="advanced-tools-body">
+            <div class="toolbar-settings">
+              <label>定量极性
+                <select id="signalMode">
+                  <option value="light">高像素值为信号</option>
+                  <option value="dark">低像素值为信号</option>
+                </select>
+              </label>
+              <label>显示 <select id="displayMode"><option value="auto">自动（论文常用）</option><option value="original">原始黑白方向</option><option value="invert">反相显示</option></select></label>
+              <label>背景间隔 <input id="bgGap" type="number" min="0" value="3"></label>
+              <label>背景高度 <input id="bgHeight" type="number" min="1" value="6"></label>
+              <label>缩放 <select id="zoomSelect"><option value="fit">适应窗口</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="1">100%</option><option value="1.5">150%</option><option value="2">200%</option><option value="3">300%</option><option value="4">400%</option><option value="6">600%</option><option value="8">800%</option></select></label>
+            </div>
+            <div class="toolbar-utilities">
+          <span class="utility-label">图像与 ROI 工具</span>
+          <button id="straightenBtn" class="ghost">画线拉平</button>
+          <button id="focusRoiBtn" class="ghost">聚焦区域</button>
+          <label>框宽 <input id="roiWidth" type="number" min="4" value="80"></label>
+          <label>框高 <input id="roiHeight" type="number" min="4" value="40"></label>
+          <span class="size-auto-hint">修改后自动应用到选中框</span>
+          <button id="applyRoiSizeBtn" class="ghost">应用当前框</button>
+          <button id="applyAllRoiSizeBtn" class="ghost">统一全部框</button>
+          <button id="undoBtn" class="ghost">撤销本组</button>
+          <span class="utility-divider"></span>
+          <button id="clearBtn" class="ghost danger">清空 ROI</button>
+          <button id="removeImageBtn" class="ghost danger">移除图片</button>
+            </div>
+          </div>
+        </details>
       </div>
 
       <div id="emptyState">
@@ -71,7 +118,7 @@
         <canvas id="imageCanvas"></canvas>
         <canvas id="overlayCanvas"></canvas>
       </div>
-      <p class="hint">推荐：粗框整排并“聚焦当前区域”→清除ROI→直接拖出第1个Lane→向右复制并拖到第2个Lane→输入Lane数→按间距生成。</p>
+      <p class="hint">按上方 1 → 2 → 3 操作：第一个框决定大小，第二个框决定间距和方向，最后生成整排 Lane。选中框后按 Delete 删除；按住 Ctrl 拖动可复制。</p>
     </section>
 
     <aside class="side">
@@ -115,10 +162,6 @@
         <button id="exportPanel" disabled>导出 Panel PNG</button>
       </div>
       <div class="panel-controls">
-        <label>框宽 <input id="cropWidth" type="number" min="4" value="80"></label>
-        <label>框高 <input id="cropHeight" type="number" min="4" value="40"></label>
-        <label><input id="fixedPlacement" type="checkbox" checked> 单击放置固定框</label>
-        <button id="applyCropSize" class="ghost">应用到当前框</button>
         <button id="addToPanel">加入 Panel</button>
         <button id="clearPanel" class="ghost danger">清空 Panel</button>
         <label>排列 <select id="panelLayout"><option value="vertical">上下排列（多张膜）</option><option value="horizontal">左右排列（单个条带）</option></select></label>
@@ -151,7 +194,7 @@
   <script src="vendor/UTIF.js"></script>
   <script src="vendor/konva.min.js"></script>
   <script src="vendor/jspdf.umd.min.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=20260715-5"></script>
   <script src="matrix.js"></script>
   <script src="studio.js"></script>
 </body>
