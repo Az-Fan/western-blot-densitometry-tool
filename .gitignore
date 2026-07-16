@@ -25,3 +25,8 @@ wb-panel-project.json
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Desktop build output
+build/
+dist/
+*.spec

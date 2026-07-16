@@ -34,6 +34,15 @@ Local-first Western blot band densitometry and publication panel editor for TIFF
 
 不要直接双击 `index.html` 做正式 TIFF 定量；该方式只能使用浏览器预览像素。
 
+## Windows 桌面版构建
+
+```powershell
+python -m pip install -r .\desktop\requirements.txt
+powershell -ExecutionPolicy Bypass -File .\desktop\build.ps1
+```
+
+构建结果位于 `dist/WB-Densitometry/`。整个文件夹可以作为免安装版分发，用户双击 `WB-Densitometry.exe` 即可运行，无需单独安装 Python。
+
 ## 推荐分析流程
 
 1. 拖入未调整亮度/对比度的原始 TIFF。
